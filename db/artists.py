@@ -1,4 +1,4 @@
-from db import get_conn, pack, unpack
+from db.db import get_conn, pack, unpack
 
 def add(name, orig_name=None, on_lang=None,
                alt_names=None, an_lang=None,

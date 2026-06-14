@@ -1,8 +1,8 @@
 import sqlite3
 import json
-import artists
+from pathlib import Path
 
-DB_PATH = "gensou.db"
+DB_PATH = Path(__file__).parent / "gensou.db"
 
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
@@ -19,8 +19,12 @@ def unpack(s):
     # JSON array from DB --> Python list
     return json.loads(s) if s else []
 
+'''
+import db.artists
+
 if __name__ == "__main__":
     artists.add(name="ROSARIO",
                alt_names=['† ROSARIO †'], an_lang=['rnz'],
                description='vk band active from 1994 to 1995',
                country="JPN")
+'''

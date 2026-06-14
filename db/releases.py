@@ -1,4 +1,4 @@
-from db import get_conn, pack, unpack
+from db.db import get_conn, pack, unpack
 
 def get_releases(variation_id):
     with get_conn() as conn:

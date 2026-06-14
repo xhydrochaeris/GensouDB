@@ -82,14 +82,17 @@ CREATE TABLE FILE (
 
 CREATE TABLE USER (
     ID          INTEGER PRIMARY KEY AUTOINCREMENT,
-    uname       TEXT NOT NULL,                     -- Username
-    uname_norm  TEXT NOT NULL,                     -- Username (normalized)
-    class       INT NOT NULL DEFAULT 0,            -- enum 0=User 1=Member 2=Contributor 3=PowerUser 4=Elite 50=Moderator 99=Admin
-    pw_hash     TEXT,                              -- Hashed Password
-    Prefs       TEXT,                              -- JSON array of prefereneces
-    SESS_ID     TEXT,                              -- Secret
-    SESS_expiry TEXT,                              -- ISO 8601: "2026-06-15T14:30:00"
-    dummy_pw    BOOLEAN NOT NULL DEFAULT 1         -- Whether the current password is a dummy
+    dname       TEXT NOT NULL UNIQUE CHECK(length(dname) <= 40), -- Display name
+    uname       TEXT NOT NULL UNIQUE CHECK(                      -- Username
+                    length(uname) <= 20 AND
+                    uname GLOB '*[^a-zA-Z0-9_-]*' = 0
+                ),
+    class       INT NOT NULL DEFAULT 0, -- enum 0=User 1=Member 2=Contributor 3=PowerUser 4=Elite 50=Moderator 99=Admin
+    pw_hash     TEXT,                                            -- Password (hashed)
+    Prefs       TEXT DEFAULT '{}',                               -- JSON Array
+    SESS_ID     TEXT,                                            -- Session ID
+    SESS_Expiry TEXT,                                            -- Session Expiry
+    dummy_pw    BOOLEAN NOT NULL DEFAULT 1                       -- The password is not initialized by the user yet
 );
 
-INSERT INTO USER (ID, uname, uname_norm, class) VALUES (0, 'CIPHER 【零】', 'cipher', 99);
+INSERT INTO USER (ID, dname, uname, class) VALUES (0, 'CIPHER 【零】', 'cipher', 99);

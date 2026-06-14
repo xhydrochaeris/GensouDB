@@ -1,4 +1,4 @@
-from db import get_conn, pack, unpack
+from db.db import get_conn, pack, unpack
 
 def add(artist_ids, artist_aliases, title,
                       release_type=8, description=None, release_date=None):
