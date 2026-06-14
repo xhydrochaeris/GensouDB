@@ -1,0 +1,294 @@
+body {
+  background-color: #220000;
+  background-image: url("366743.png");
+  background-repeat: repeat;
+  background-size: auto;
+  background-size: 64px 64px;
+  background-attachment: fixed;
+  animation: diagScroll 6s linear infinite;
+}
+
+::selection {
+    background-color: #8b0000;
+    color: #fff;
+}
+
+/* Including custom fonts so that even Linux/Android displays
+   webpage using Times New Roman */
+@font-face {
+    font-family: 'TNR';
+    src: url(font/times.ttf);
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'TNR';
+    src: url(font/timesbd.ttf);
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'TNR';
+    src: url(font/timesi.ttf);
+    font-weight: normal;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'TNR';
+    src: url(font/timesbi.ttf);
+    font-weight: bold;
+    font-style: italic;
+}
+
+* {
+    font-family: 'TNR';
+  }
+
+li,h1,h2,p{
+  color: yellow;
+}
+summary {
+  color: yellow;
+  cursor: pointer;
+}
+summary:hover{
+  color:#18f0ff;
+}
+a{
+color: rgb(0, 255, 170);
+}
+.rainbow_link {
+  color: rgba(0, 0, 0, 0);
+}
+header a:hover{
+background: linear-gradient(
+    #ff9634,
+    #e63a24
+  );;
+color: purple;
+}
+a:hover{
+background: linear-gradient(
+    #ff9634,
+    #e63a24
+  );;
+color: purple;
+}
+.TopBar {
+  display:flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+.TopBar header {
+  flex: 1;
+}
+header{
+  display: flex;
+background-color: rgba(122, 16, 16, 0.6);
+border-radius: 6px;
+position: relative;
+z-index: 0;
+}
+header a{
+  display: flex;
+  color: white;
+padding: 20px;
+border-radius: 6px;
+position: relative;
+z-index: 1;
+overflow: visible;
+}
+footer{
+  margin-left:auto;
+  margin-right:auto;
+}
+footer a{
+padding-left: 20px;
+padding-right: 20px;
+}
+.center_footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 30px;
+  border: 3px solid transparent;
+  padding: 3px;
+  border-radius: 6px;
+}
+
+.center_img{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height:auto;
+  width: auto;
+  padding: 5px;
+}
+
+.center_img img{
+  max-width: 750px;
+  width: 100%;
+  object-fit: contain;
+}
+
+.Body {
+  display: flex;
+  width: 100%;
+}
+.LeftColumn {
+  flex: 1;
+}
+.RightColumn { 
+  width: 350px;
+  background: rgba(0, 0, 139, 0.3);
+}
+.RightColumn p { 
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.RightColumn img { 
+  max-height:340px;
+  max-width:340px;
+  height:auto;
+  width:auto;
+  padding:5px;
+}
+
+/*https://stackoverflow.com/questions/54702124/rainbow-text-animation-using-only-css*/
+.rainbow_underline {
+    text-decoration: underline;
+}
+.rainbow_text_animated {
+    background: linear-gradient(to right, yellow, #0099ff , #00ff00, #ff3399, yellow);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow_animation 12s linear infinite;
+    background-size: 20% 100%;
+}
+
+@keyframes rainbow_animation {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 100% 0;
+    }
+}
+
+/* Rainbow border wrapper: apply to ANY element */
+.rainbow-border {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated rainbow layer */
+.rainbow-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+  border-radius: inherit;
+
+  background: linear-gradient(
+    to right,
+    #6666ff,
+    #0099ff,
+    #00ff00,
+    #ff3399,
+    #6666ff
+  );
+  background-size: 20% 100%;
+  animation: rainbow_animation 12s linear infinite;
+
+  z-index: -1;
+
+  /* Mask so rainbow only appears as border */
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+header a:hover::before {
+  content: "";
+  position: absolute;
+  inset: 0;                /* stay inside the element */
+  border-radius: inherit;
+  padding: 3px;            /* border thickness INSIDE the box */
+  pointer-events: none;
+
+  background: linear-gradient(
+    to right,
+    rgb(0, 255, 170),
+    #0099ff,
+    #00ff00,
+    #ff3399,
+    rgb(0, 255, 170)
+  );
+  background-size: 60% 100%;
+  animation: rainbow_animation 12s linear infinite;
+
+  z-index: 0;
+
+  /* Mask so only the border inside padding shows */
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+@keyframes diagScroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -64px -128px; /* moves up-left */
+  }
+}
+
+table, th, td {
+  font-family: NSW;
+  color: darkblue;
+  font-size: 18px;
+  border: 1px solid indigo;
+  border-radius: 5px;
+  background-color:teal;
+}
+th {
+  background-color: violet;
+}
+td {
+  background-color: white;
+}
+
+.green-mark {
+  background-color: rgb(0, 212, 0);
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  padding:2px;
+  cursor: help;
+}
+
+.yellow-mark {
+  background-color: yellow;
+  color: black;
+  border-radius: 6px;
+  font-size: 12px;
+  padding:2px;
+  cursor: help;
+}
+
+.red-mark {
+  background-color: red;
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  padding:2px;
+  cursor: help;
+}

@@ -1,0 +1,95 @@
+-- Release type enum reference (stored as INTEGER):
+-- 0: Album, 1: EP, 2: Single, 3: Demo, 4: Compilation,
+-- 5: Live, 6: Soundtrack, 7: Bootleg, 8: Other
+
+-- File/Item type enum reference:
+-- 0: Music, 1: Video, 2: Scan, 3: Physical, 4: Document, 5: Other
+
+PRAGMA journal_mode=WAL;
+PRAGMA foreign_keys=ON;
+
+CREATE TABLE ARTISTS (
+    ID          INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name        TEXT NOT NULL,                  -- Romanized name (assumed RNZ)
+    Orig_Name   TEXT,                           -- Name in original script
+    ON_Lang     TEXT CHECK(length(ON_Lang) = 3),-- ISO 639-3 language of Orig_Name
+    Alt_Names   TEXT DEFAULT '[]',              -- JSON array of strings
+    AN_Lang     TEXT DEFAULT '[]',              -- JSON array of 3-char lang codes
+    Description TEXT,
+    Country     TEXT CHECK(length(Country) = 3) -- ISO 3166-1 alpha-3
+);
+
+CREATE TABLE RLS_GROUPS (
+    ID           INTEGER PRIMARY KEY AUTOINCREMENT,
+    A_ID         TEXT NOT NULL DEFAULT '[]',    -- JSON array of ARTISTS.ID
+    A_Alias      TEXT NOT NULL DEFAULT '[]',    -- JSON array of alias indices (-1 = no alias)
+    Title        TEXT NOT NULL,
+    Release_Type INTEGER NOT NULL DEFAULT 8,    -- enum, see above
+    Description  TEXT,
+    Release_Date TEXT                           -- fuzzy: "1992.01.xx", "[1998-2001]", etc.
+);
+
+CREATE TABLE VARIATIONS (
+    ID          INTEGER PRIMARY KEY AUTOINCREMENT,
+    RG_ID       INTEGER NOT NULL REFERENCES RLS_GROUPS(ID),
+    Title       TEXT,                           -- NULL if no distinct variation name
+    Description TEXT
+);
+
+CREATE TABLE RELEASES (
+    ID           INTEGER PRIMARY KEY AUTOINCREMENT,
+    Var_ID       INTEGER NOT NULL REFERENCES VARIATIONS(ID),
+    A_Alias      TEXT NOT NULL DEFAULT '[]',    -- JSON array of alias indices
+    Title        TEXT,                          -- NULL if same as release group title
+    Label        TEXT,
+    Cat_No       TEXT,
+    Release_Date TEXT,                          -- fuzzy date
+    Country      TEXT CHECK(length(Country) = 3),
+    Description  TEXT
+);
+
+CREATE TABLE ITEMS (
+    ID      INTEGER PRIMARY KEY AUTOINCREMENT,
+    Rls_ID  INTEGER NOT NULL REFERENCES RELEASES(ID),
+    Medium  TEXT NOT NULL,                      -- "12\" Vinyl", "CD", "Cassette", etc.
+    Type    INTEGER NOT NULL DEFAULT 0,         -- enum: 0=Music, 1=Video, 2=Physical
+    Disc    INTEGER DEFAULT 1,
+    Side    TEXT CHECK(length(Side) <= 1),      -- "A", "B", NULL if not applicable
+    Details TEXT
+);
+
+CREATE TABLE SONG (
+    ID         INTEGER PRIMARY KEY AUTOINCREMENT,
+    Title      TEXT NOT NULL,
+    Language   TEXT CHECK(length(Language) = 3),-- ISO 639-3
+    Associated TEXT DEFAULT '[]'                -- JSON array of SONG.IDs
+);
+
+CREATE TABLE FILE (
+    ID       INTEGER PRIMARY KEY AUTOINCREMENT,
+    Item_ID  INTEGER NOT NULL REFERENCES ITEMS(ID),
+    Song_ID  INTEGER REFERENCES SONG(ID),       -- NULL for non-music files
+    No       INTEGER,                           -- track/page number
+    Title    TEXT,                              -- can differ from SONG.Title (e.g. live title)
+    Artists  TEXT NOT NULL DEFAULT '[]',        -- JSON array of ARTISTS.IDs
+    A_Alias  TEXT NOT NULL DEFAULT '[]',        -- JSON array of alias indices
+    Format   TEXT,                              -- "FLAC", "MP3", "JPG", "LOG", etc.
+    Bitrate  TEXT,                              -- "lossless", "320kbps", "24bit/96kHz", etc.
+    Quality  TEXT,                              -- free text rip quality notes
+    Type     INTEGER NOT NULL DEFAULT 0,        -- enum: 0=Music, 1=Video, 2=Scan, etc.
+    Location TEXT                               -- relative file path from storage root
+);
+
+CREATE TABLE USER (
+    ID          INTEGER PRIMARY KEY AUTOINCREMENT,
+    uname       TEXT NOT NULL,                     -- Username
+    uname_norm  TEXT NOT NULL,                     -- Username (normalized)
+    class       INT NOT NULL DEFAULT 0,            -- enum 0=User 1=Member 2=Contributor 3=PowerUser 4=Elite 50=Moderator 99=Admin
+    pw_hash     TEXT,                              -- Hashed Password
+    Prefs       TEXT,                              -- JSON array of prefereneces
+    SESS_ID     TEXT,                              -- Secret
+    SESS_expiry TEXT,                              -- ISO 8601: "2026-06-15T14:30:00"
+    dummy_pw    BOOLEAN NOT NULL DEFAULT 1         -- Whether the current password is a dummy
+);
+
+INSERT INTO USER (ID, uname, uname_norm, class) VALUES (0, 'CIPHER 【零】', 'cipher', 99);
