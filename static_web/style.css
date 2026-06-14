@@ -132,6 +132,24 @@ padding-right: 20px;
   object-fit: contain;
 }
 
+form {
+  font-size: 18px;
+  padding: 5px;
+}
+
+form label{
+  color: yellow;
+}
+
+.login_center{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height:auto;
+  width: auto;
+  padding: 5px;
+}
+
 .Body {
   display: flex;
   width: 100%;

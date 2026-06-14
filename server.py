@@ -3,15 +3,15 @@ import mimetypes
 from pathlib import Path
 from aiohttp import web
 
-from serve_page import serve_page
+from pages.serve_page import serve_page
 
 STATIC_DIR = Path("static_web")
 HOST = "0.0.0.0"
 PORT = 8080
 
 async def handle(request: web.Request) -> web.Response:
-    context = {}
-
+    context = request.query.copy()
+    context.add("user_id" , None)
     path = request.path
 
     relative  = path.lstrip("/") or "home"
