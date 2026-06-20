@@ -4,7 +4,7 @@ from pathlib import Path
 from aiohttp import web
 
 from pages.serve_page import serve_page
-from db.user import get_uid, is_session_valid
+from db.user import get_uid, is_session_valid, hash_password
 
 STATIC_DIR = Path("static_web")
 HOST = "0.0.0.0"

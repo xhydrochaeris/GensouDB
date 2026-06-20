@@ -15,11 +15,36 @@ def get_uid(username):
         else:
             return dict(row)['ID']
 
+def dname_collision(dname):
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM USER WHERE dname = ?", (dname,)
+        ).fetchone()
+        if not row:
+            return False
+        else:
+            return True
+
 def hash_password(plaintext: str) -> str:
     return ph.hash(plaintext)
 
+def store_hash_password(uid, pt):
+    phash = hash_password(pt)
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE USER SET pw_hash = ?, dummy_pw = ? WHERE ID = ?", (phash, False, uid,)
+        )
+
+def create_user(dname, uname, pwd):
+    phash = hash_password(pwd)
+    with get_conn() as conn:
+        cursor = conn.execute(
+            "INSERT INTO USER (dname, uname, pw_hash, dummy_pw) values (?, ?, ?, ?)", (dname, uname, phash, False)
+        )
+        return cursor.lastrowid
+
 def verify_password(uid, plaintext):
-    # Return 0 (false), 1 (true), 2 (uninitialized)
+    # Return 0 (false), 1 (true), 2 (dummy), 3 (uninit)
     with get_conn() as conn:
         row = conn.execute(
             "SELECT pw_hash,dummy_pw FROM USER WHERE ID = ?", (uid,)
@@ -29,7 +54,7 @@ def verify_password(uid, plaintext):
         stored_hash = dict(row)['pw_hash']
         is_dummy = dict(row)['dummy_pw']
         if stored_hash is None:
-            return 2 # No password for this user in database
+            return 3 # No password for this user in database
         else:
             if is_dummy:
                 try:

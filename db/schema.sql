@@ -96,3 +96,6 @@ CREATE TABLE USER (
 );
 
 INSERT INTO USER (ID, dname, uname, class) VALUES (0, 'CIPHER 【零】', 'cipher', 99);
+
+INSERT INTO USER (dname, uname) VALUES ('DisplayName', 't1');
+INSERT INTO USER (dname, uname) VALUES ('t3', 't2');
