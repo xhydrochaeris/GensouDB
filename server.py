@@ -33,8 +33,12 @@ def clear_session_cookie(response: web.Response) -> None:
     response.del_cookie("uid")
 
 async def handle(request: web.Request) -> web.Response:
-    context = request.query.copy()
-    context["user_id"] = None
+    try:
+        post = await request.post()
+    except:
+        post = multidict.MultiDict()
+    query = request.query.copy()
+    uid = None
     try:
         uid = int(request.cookies.get("uid"))
     except:
@@ -44,8 +48,8 @@ async def handle(request: web.Request) -> web.Response:
     if (sess_id == None):
         uid = None
     else:
-        if is_session_valid(uid, sess_id):
-            context["user_id"] = uid
+        if not is_session_valid(uid, sess_id):
+            uid = None
 
     path = request.path
 
@@ -65,7 +69,7 @@ async def handle(request: web.Request) -> web.Response:
             headers={"Content-Type": mime or "application/octet-stream"}
         )
 
-    html, status, extra, extra2 = await serve_page(relative, context)
+    html, status, extra, extra2 = await serve_page(relative, uid, post, query)
     resp = web.Response(
         text=html,
         status=status,
@@ -84,6 +88,7 @@ async def handle(request: web.Request) -> web.Response:
 
 app = web.Application()
 app.router.add_get("/{path_info:.*}", handle)
+app.router.add_post("/{path_info:.*}", handle)
 
 if __name__ == "__main__":
     web.run_app(app, host=HOST, port=PORT)

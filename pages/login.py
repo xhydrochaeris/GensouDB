@@ -14,7 +14,7 @@ async def login_form(error=False):
     if error:
         e = "<div class=login_center><p style=\"color: red; font-weight: bold\">Username or password may be incorrect!</p></div>"
     return f"""<div class=login_center><h2>Login:</h2></div>
-<div class=login_center><form action="/login">
+<div class=login_center><form action="/login" method=post>
   <label for="uname">Username:</label><br>
   <input type="text" id="uname" name="uname"><br><br>
   <label for="pwd">Password:</label><br>
@@ -43,7 +43,7 @@ async def register_form(error='0'):
         e = "<div class=login_center><p style=\"color: red; font-weight: bold\">Display name already taken</p></div>"
 
     return f"""<div class=login_center><h2>Register:</h2></div>
-<div class=login_center><form action="/register">
+<div class=login_center><form action="/register" method=post>
   <label for="dname">Display Name:</label><br>
   <input type="text" id="dname" name="dname"><br><br>
   <label for="uname">Username:</label><br>
@@ -78,7 +78,7 @@ async def dummy_form(error='0', dummy=True):
   <input type="password" id="opwd" name="opwd"><br><br>"""
     return f"""<div class=login_center><h2>Set your password:</h2></div>
     <div class=login_center><p>Your current password is outdated. Please set a new one.</p></div>
-<div class=login_center><form action="/set_pw">
+<div class=login_center><form action="/set_pw" method=post>
 {d}
   <label for="pwd1">Password:</label><br>
   <input type="password" id="pwd1" name="pwd1"><br>
@@ -96,138 +96,110 @@ CLOSED_FORM = """<div class=login_center><h2>Register:</h2></div>
 <div class=login_center><p>Already have an account? <a href=/login>Log in</a>.</p></div>
 """
 
-async def login_page(s, context):
-    user = context['user_id']
+async def login_page(s, user, context):
     if user is not None:
-        return ("/logged_in", 200, ["redirect"], None)
+        return (await html_head("gensou : logged in", user) + LOGGED_IN + HTML_END, 200, None, None)
     try:
         uname = context['uname']
         pwd = context['pwd']
         uid = get_uid(uname)
         check = verify_password(uid, pwd)
         if check == 0:
-            return ("/login?bad=", 200, ["redirect"], None)
+            return (await html_head("gensou : login", user) + await login_form(True) + HTML_END, 200, None, None)
         elif check == 1:
             sess_id, sess_expiry = new_session(uid, days=30)
-            return ("/logged_in", 200, ["redirect", "make_cookie"], [f"{uid}", sess_id])
+            return (await html_head("gensou : logged in", uid) + LOGGED_IN + HTML_END, 200, ["make_cookie"], [f"{uid}", sess_id])
         else:
             sess_id, sess_expiry = new_session(uid, days=30)
             return ("/set_pw", 200, ["redirect", "make_cookie"], [f"{uid}", sess_id])
     except:
-        try:
-            context['bad']
-            return (await html_head("gensou : login", user) + await login_form(True) + HTML_END, 200, None, None)
-        except:
-            return (await html_head("gensou : login", user) + await login_form() + HTML_END, 200, None, None)
+        return (await html_head("gensou : login", user) + await login_form() + HTML_END, 200, None, None)
 
-async def register_page(s, context):
-    user = context['user_id']
+async def register_page(s, user, context):
     if REGISTRATION_CLOSED:
         return (await html_head("gensou : registration closed", user) + CLOSED_FORM + HTML_END, 200, None, None)
+    if user is not None:
+        return (await html_head("gensou : logged in", user) + LOGGED_IN + HTML_END, 200, None, None)
     try:
-        context['success']
-        return (await html_head("gensou : registration success", user) + REGISTER_SUCCESS + HTML_END, 200, None, None)
+        dname = context['dname']
+        # display name length limit
+        if len(dname) > 40:
+            return (await html_head("gensou : register", user) + await register_form('4') + HTML_END, 200, None, None)
+        uname = context['uname']
+        # username accepted char set
+        if not(set(uname) <= set(string.ascii_letters + string.digits + '-' + '_')):
+            return (await html_head("gensou : register", user) + await register_form('1') + HTML_END, 200, None, None)
+        # empty username disallowed
+        if len(uname) == 0:
+            return (await html_head("gensou : register", user) + await register_form('1') + HTML_END, 200, None, None)
+        # empty display name is set to username
+        if len(dname) == 0:
+            dname = uname
+        # username length limit
+        if len(uname) > 20:
+            return (await html_head("gensou : register", user) + await register_form('5') + HTML_END, 200, None, None)
+        # username collision
+        if get_uid(uname) >= 0:
+            return (await html_head("gensou : register", user) + await register_form('6') + HTML_END, 200, None, None)
+        if dname_collision(dname):
+            return (await html_head("gensou : register", user) + await register_form('7') + HTML_END, 200, None, None)
+        pwd1 = context['pwd1']
+        pwd2 = context['pwd2']
+        if pwd1 != pwd2:
+            return (await html_head("gensou : register", user) + await register_form('3') + HTML_END, 200, None, None)
+        elif len(pwd1) < 8:
+            return (await html_head("gensou : register", user) + await register_form('2') + HTML_END, 200, None, None)
+        else:
+            uid = create_user(dname, uname, pwd1)
+            sess_id, sess_expiry = new_session(uid, days=30)
+            return (await html_head("gensou : registration success", uid) + REGISTER_SUCCESS + HTML_END, 200, ["make_cookie"], [f"{uid}", sess_id])
     except:
-        if user is not None:
-            return ("/logged_in", 200, ["redirect"], None)
-        try:
-            dname = context['dname']
-            # display name length limit
-            if len(dname) > 40:
-                return ("/register?bad=4", 200, ["redirect"], None)
-            uname = context['uname']
-            # username accepted char set
-            if not(set(uname) <= set(string.ascii_letters + string.digits + '-' + '_')):
-                return ("/register?bad=1", 200, ["redirect"], None)
-            # empty username disallowed
-            if len(uname) == 0:
-                return ("/register?bad=1", 200, ["redirect"], None)
-            # empty display name is set to username
-            if len(dname) == 0:
-                dname = uname
-            # username length limit
-            if len(uname) > 20:
-                return ("/register?bad=5", 200, ["redirect"], None)
-            # username collision
-            if get_uid(uname) >= 0:
-                return ("/register?bad=6", 200, ["redirect"], None)
-            if dname_collision(dname):
-                return ("/register?bad=7", 200, ["redirect"], None)
-            pwd1 = context['pwd1']
-            pwd2 = context['pwd2']
-            if pwd1 != pwd2:
-                return ("/register?bad=3", 200, ["redirect"], None)
-            elif len(pwd1) < 8:
-                return ("/register?bad=2", 200, ["redirect"], None)
-            else:
-                uid = create_user(dname, uname, pwd1)
-                sess_id, sess_expiry = new_session(uid, days=30)
-                return ("/register?success=", 200, ["redirect", "make_cookie"], [f"{uid}", sess_id])
-        except:
-            try:
-                s = context['bad']
-                return (await html_head("gensou : register", user) + await register_form(s) + HTML_END, 200, None, None)
-            except:
-                return (await html_head("gensou : register", user) + await register_form() + HTML_END, 200, None, None)
+        return (await html_head("gensou : register", user) + await register_form() + HTML_END, 200, None, None)
 
-async def set_pw(s, context):
-    user = context['user_id']
+async def set_pw(s, user, context):
     if user is None:
         d = 2
     else:
         d = pwd_is_dummy(user)
-    try:
-        context['success']
-        return (await html_head("gensou : password updated", user) + PW_UPDATED + HTML_END, 200, None, None)
-    except:
-        if d == 0:
-            try:
-                opwd = context['opwd']
-                check = verify_password(user, opwd)
-                if check == 0:
-                    return ("/set_pw?bad=1", 200, ["redirect"], None)
-                pwd1 = context['pwd1']
-                pwd2 = context['pwd2']
-                if pwd1 != pwd2:
-                    return ("/set_pw?bad=3", 200, ["redirect"], None)
-                elif len(pwd1) < 8:
-                    return ("/set_pw?bad=2", 200, ["redirect"], None)
-                elif verify_password(user, pwd1) == 1:
-                    return ("/set_pw?bad=4", 200, ["redirect"], None)
-                else:
-                    store_hash_password(user, pwd1)
-                    return ("/set_pw?success=", 200, ["redirect"], None)
-            except:
-                try:
-                    s = context['bad']
-                    return (await html_head("gensou : register", user) + await dummy_form(s, False) + HTML_END, 200, None, None)
-                except:
-                    return (await html_head("gensou : register", user) + await dummy_form(dummy=False) + HTML_END, 200, None, None)
-        elif d == 1:
-            try:
-                pwd1 = context['pwd1']
-                pwd2 = context['pwd2']
-                chk2 = verify_password(user, pwd1)
-                if pwd1 != pwd2:
-                    return ("/set_pw?bad=3", 200, ["redirect"], None)
-                elif len(pwd1) < 8:
-                    return ("/set_pw?bad=2", 200, ["redirect"], None)
-                elif chk2 == 2:
-                    return ("/set_pw?bad=4", 200, ["redirect"], None)
-                else:
-                    store_hash_password(user, pwd1)
-                    return ("/set_pw?success=", 200, ["redirect"], None)
-            except:
-                try:
-                    s = context['bad']
-                    return (await html_head("gensou : register", user) + await dummy_form(s) + HTML_END, 200, None, None)
-                except:
-                    return (await html_head("gensou : register", user) + await dummy_form() + HTML_END, 200, None, None)
+    if d == 0:
+        try:
+            opwd = context['opwd']
+            check = verify_password(user, opwd)
+            if check == 0:
+                return (await html_head("gensou : register", user) + await dummy_form('1', False) + HTML_END, 200, None, None)
+            pwd1 = context['pwd1']
+            pwd2 = context['pwd2']
+            if pwd1 != pwd2:
+                return (await html_head("gensou : register", user) + await dummy_form('3', False) + HTML_END, 200, None, None)
+            elif len(pwd1) < 8:
+                return (await html_head("gensou : register", user) + await dummy_form('2', False) + HTML_END, 200, None, None)
+            elif verify_password(user, pwd1) == 1:
+                return (await html_head("gensou : register", user) + await dummy_form('4', False) + HTML_END, 200, None, None)
+            else:
+                store_hash_password(user, pwd1)
+                return (await html_head("gensou : password updated", user) + PW_UPDATED + HTML_END, 200, None, None)
+        except:
+            return (await html_head("gensou : register", user) + await dummy_form(dummy=False) + HTML_END, 200, None, None)
+    elif d == 1:
+        try:
+            pwd1 = context['pwd1']
+            pwd2 = context['pwd2']
+            chk2 = verify_password(user, pwd1)
+            if pwd1 != pwd2:
+                return (await html_head("gensou : register", user) + await dummy_form('3') + HTML_END, 200, None, None)
+            elif len(pwd1) < 8:
+                return (await html_head("gensou : register", user) + await dummy_form('2') + HTML_END, 200, None, None)
+            elif chk2 == 2:
+                return (await html_head("gensou : register", user) + await dummy_form('4') + HTML_END, 200, None, None)
+            else:
+                store_hash_password(user, pwd1)
+                return (await html_head("gensou : password updated", user) + PW_UPDATED + HTML_END, 200, None, None)
+        except:
+            return (await html_head("gensou : register", user) + await dummy_form() + HTML_END, 200, None, None)
         
     return (await html_head("gensou : error unauthorized", user) + await err_body(401) + HTML_END, 401, None, None)
 
-async def logout(s, context):
-    user = context['user_id']
+async def logout(s, user):
     if user is not None:
         destroy_session(user)
     return (await html_head("gensou : logged out", None) + LOGGED_OUT + HTML_END, 200, ["clear_cookie"], None)

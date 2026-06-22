@@ -126,3 +126,14 @@ def destroy_session(uid):
             sess_expiry,
             uid
         ))
+
+def get_privilege(uid):
+    with get_conn() as conn:
+        if uid is None:
+            return -1 # Not logged in
+        row = conn.execute(
+            "SELECT class FROM USER WHERE ID = ?", (uid,)
+        ).fetchone()
+        if not row:
+            return -1 # User ID doesn't exist'
+        return dict(row)['class']
