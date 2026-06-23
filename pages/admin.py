@@ -18,11 +18,18 @@ ADMIN_HEAD = """<!DOCTYPE html>
             <a href="/admin">Admin</a>
         </header>
     </div>
+    <br>
     <div class="TopBar">
         <span class="rainbow rainbow_text_animated" style=\"font-size: 28px;font-weight: bold;font-style: italic;\">Admin Control Panel:</span>
         <header style="background-color:rgba(100, 0, 122, 0.6);">
             <a href="/admin?table=user">User</a>
             <a href="/admin?table=artists">Artists</a>
+            <a href="/admin?table=rls_groups">Rls_Groups</a>
+            <a href="/admin?table=variations">Variations</a>
+            <a href="/admin?table=releases">Releases</a>
+            <a href="/admin?table=items">Items</a>
+            <a href="/admin?table=song">Song</a>
+            <a href="/admin?table=file">File</a>
         </header>
     </div>
 """
@@ -145,7 +152,7 @@ async def admin_page(user, post, query):
             q = query['table']
             return (ADMIN_HEAD + await html_table(q, f, t) + HTML_END, 200, None, None)
         except:
-            return (ADMIN_HEAD + HTML_END, 200, None, None)
+            return (ADMIN_HEAD + "<h1>Select a table to view from the header above.</h1>" + HTML_END, 200, None, None)
     elif a == "insert":
         try:
             q = query['table']
@@ -172,4 +179,4 @@ async def admin_page(user, post, query):
         except:
             return (ADMIN_HEAD + await err_body(400) + HTML_END, 400, None, None)
     else:
-        return (ADMIN_HEAD + HTML_END, 200, None, None)
+        return (ADMIN_HEAD + await err_body(400) + HTML_END, 400, None, None)

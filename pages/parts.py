@@ -1,4 +1,4 @@
-from db.user import pwd_is_dummy
+from db.user import pwd_is_dummy, get_privilege
 
 async def html_head(t, user):
     dummy = ''
@@ -7,6 +7,8 @@ async def html_head(t, user):
         lin = f'<a href="/user/{user}">Profile</a><a href="/prefs">Preferences</a><a href="/logout">Log out</a>'
         if pwd_is_dummy(user):
             dummy = '<h1 style="color:red">Your current password is outdated. Please <a href="/set_pw"">set a new one</a>.</h1>'
+        if get_privilege(user) == 99:
+            lin += f'<a href="/admin">Admin</a>'
     return f"""<!DOCTYPE html>
 <html>
 <head>

@@ -1,6 +1,7 @@
 from pages.parts import html_head, HOME_BODY, HTML_END, err_body
 from pages.login import login_page, register_page, LOGGED_IN, set_pw, logout
 from pages.admin import admin_page, admin_insert, admin_edit
+from pages.preferences import prefs_page
 from db.user import get_privilege
 
 async def serve_page(s, user, post, query):
@@ -17,6 +18,8 @@ async def serve_page(s, user, post, query):
             return await set_pw(user, post)
         elif s == "register":
             return await register_page(user, post)
+        elif s == "prefs":
+            return await prefs_page(user, post)
         elif s == "logout":
             return await logout(user)
         elif s == "admin":
