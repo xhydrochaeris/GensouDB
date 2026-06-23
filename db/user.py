@@ -30,16 +30,18 @@ def hash_password(plaintext: str) -> str:
 
 def store_hash_password(uid, pt):
     phash = hash_password(pt)
+    now = datetime.now(timezone.utc).isoformat()
     with get_conn() as conn:
         conn.execute(
-            "UPDATE USER SET pw_hash = ?, dummy_pw = ? WHERE ID = ?", (phash, False, uid,)
+            "UPDATE USER SET pw_hash = ?, pw_date = ?, dummy_pw = ? WHERE ID = ?", (phash, now, False, uid,)
         )
 
 def create_user(dname, uname, pwd):
     phash = hash_password(pwd)
+    now = datetime.now(timezone.utc).isoformat()
     with get_conn() as conn:
         cursor = conn.execute(
-            "INSERT INTO USER (dname, uname, pw_hash, dummy_pw) values (?, ?, ?, ?)", (dname, uname, phash, False)
+            "INSERT INTO USER (dname, uname, pw_hash, pw_date, dummy_pw) values (?, ?, ?, ?, ?)", (dname, uname, phash, now, False)
         )
         return cursor.lastrowid
 

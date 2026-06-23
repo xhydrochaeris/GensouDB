@@ -48,7 +48,7 @@ async def html_table(name, frm=0, to=100):
         if name.lower() == "user":
             tbl = conn.execute("SELECT * FROM USER WHERE ID >= ? AND ID <= ?", (frm, to)).fetchall()
             cnt = len(tbl)
-            hrs = ["ID", "dname", "uname", "class", "pw_hash", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]
+            hrs = ["ID", "dname", "uname", "class", "pw_hash", "pw_date", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]
         t += "<tr>"
         for hr in hrs:
             t += f"<th>{hr}</th>"
@@ -76,7 +76,7 @@ async def edit_form(name, i=None):
         if name.lower() == "user":
             if (i is not None):
                 r = conn.execute("SELECT * FROM USER WHERE ID = ?", (i,)).fetchone()
-            hrs = ["ID", "dname", "uname", "class", "pw_hash", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]
+            hrs = ["ID", "dname", "uname", "class", "pw_hash", "pw_date", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]
         if i is not None:
             t = f'<form action=\"/admin/edit\" method=post><input type="hidden" id="table", name="table", value="{name}">'
             for j in range(len(hrs)):

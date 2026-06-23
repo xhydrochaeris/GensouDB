@@ -89,6 +89,7 @@ CREATE TABLE USER (
                 ),
     class       INT NOT NULL DEFAULT 0, -- enum 0=User 1=Member 2=Contributor 3=PowerUser 4=Elite 50=Moderator 99=Admin
     pw_hash     TEXT,                                            -- Password (hashed)
+    pw_date     TEXT,
     Prefs       TEXT DEFAULT '{}',                               -- JSON Array
     SESS_ID     TEXT,                                            -- Session ID
     SESS_Expiry TEXT,                                            -- Session Expiry
