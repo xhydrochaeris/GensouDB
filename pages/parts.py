@@ -59,5 +59,14 @@ async def redirect(page):
 """
 
 def pt2html(text):
-    # TODO
-    return text
+    t = ''
+    for c in str(text):
+        if c == '<':
+            t += '&lt;'
+        elif c == '>':
+            t += '&gt;'
+        elif c == '&':
+            t += '&amp;'
+        else:
+            t += c
+    return t
