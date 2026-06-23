@@ -1,4 +1,5 @@
 from db.user import pwd_is_dummy, get_privilege
+from db.db import get_conn
 
 async def html_head(t, user):
     dummy = ''
@@ -38,9 +39,16 @@ HTML_END = """<footer class="center_footer rainbow-border">
 async def err_body(n):
     return f'<div class="center_img"><img src=https://http.cat/images/{n}.jpg></div>'
 
-HOME_BODY = """<h1>Welcome to GensouDB!</h1>
+async def home_body(user):
+    t = "You are not logged in."
+    if user is not None:
+        with get_conn() as conn:
+            r = conn.execute("SELECT dname, uname FROM USER WHERE ID = ?", (user,)).fetchone()
+            t = f'You are signed in as <a href="/user/{user}">{pt2html(r[0])}</a> <span style="font-size:20px;font-weight:normal;font-style:italic;">({pt2html(r[1])})</span>'
+
+    return f"""<h1 class="rainbow rainbow_text_animated">Welcome to GensouDB!</h1>
+<h2>{t}</h2>
 <p>abcde <a href="vkrecs/w2.html">bogus</a></p>
-<h2 class="rainbow rainbow_text_animated">rAINbow</h2>
 <ul>
 <li>abcde <a href="vkrecs/w2.html">bogus</a></li>
 </ul>

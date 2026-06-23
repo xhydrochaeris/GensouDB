@@ -13,9 +13,8 @@ ADMIN_HEAD = """<!DOCTYPE html>
         <a href="/home"><img src="/static_web/gensou-logo.png" style="max-height:50px; height:auto; width:auto;"></a>
         <header>
             <a href="/home">Home</a>
-            <a href="/search">Search</a>
-            <a href="/wiki">Wiki</a>
             <a href="/admin">Admin</a>
+            <a href="/prefs">Preferences</a><a href="/logout">Log out</a>
         </header>
     </div>
     <br>

@@ -1,4 +1,4 @@
-from pages.parts import html_head, HOME_BODY, HTML_END, err_body
+from pages.parts import html_head, home_body, HTML_END, err_body
 from pages.login import login_page, register_page, LOGGED_IN, set_pw, logout
 from pages.admin import admin_page, admin_insert, admin_edit
 from pages.preferences import prefs_page
@@ -7,7 +7,7 @@ from db.user import get_privilege
 async def serve_page(s, user, post, query):
     if s:
         if s == "home":
-            return (await html_head("gensou", user) + HOME_BODY + HTML_END, 200, None, None)
+            return (await html_head("gensou", user) + await home_body(user) + HTML_END, 200, None, None)
         elif s == "search":
             return (await html_head("gensou : error not implemented", user) + await err_body(501) + HTML_END, 501, None, None)
         elif s == "wiki":
