@@ -110,20 +110,20 @@ async def admin_insert(user, post):
         return (ADMIN_HEAD + await err_body(400) + HTML_END, 400, None, None)
 
 async def admin_edit(user, post):
-    #try:
-    q = post["table"]
-    i = int(post['ID'])
-    if q.lower() == 'user':
-        with get_conn() as conn:
-            # TODO update certain fields with nulls if left empty
-            if post['PW'] != '':
-                conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), i))
-            for f in ["dname", "uname","class", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
-                if post[f] != '':
-                    conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], i))
-    return (ADMIN_HEAD + f'<h1>Item at ID={i} updated!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
-    #except:
-    #    return (ADMIN_HEAD + await err_body(400) + HTML_END, 400, None, None)
+    try:
+        q = post["table"]
+        i = int(post['ID'])
+        if q.lower() == 'user':
+            with get_conn() as conn:
+                # TODO update certain fields with nulls if left empty
+                if post['PW'] != '':
+                    conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), i))
+                for f in ["dname", "uname","class", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
+                    if post[f] != '':
+                        conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], i))
+        return (ADMIN_HEAD + f'<h1>Item at ID={i} updated!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
+    except:
+        return (ADMIN_HEAD + await err_body(400) + HTML_END, 400, None, None)
 
 async def admin_page(user, post, query):
     try:
