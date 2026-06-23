@@ -270,7 +270,7 @@ header a:hover::before {
 }
 
 table, th, td {
-  font-family: NSW;
+  font-family: TNR;
   color: darkblue;
   font-size: 18px;
   border: 1px solid indigo;
@@ -279,9 +279,11 @@ table, th, td {
 }
 th {
   background-color: violet;
+  padding:5px;
 }
 td {
   background-color: white;
+  padding:5px;
 }
 
 .green-mark {

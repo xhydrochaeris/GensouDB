@@ -96,7 +96,7 @@ CLOSED_FORM = """<div class=login_center><h2>Register:</h2></div>
 <div class=login_center><p>Already have an account? <a href=/login>Log in</a>.</p></div>
 """
 
-async def login_page(s, user, context):
+async def login_page(user, context):
     if user is not None:
         return (await html_head("gensou : logged in", user) + LOGGED_IN + HTML_END, 200, None, None)
     try:
@@ -115,7 +115,7 @@ async def login_page(s, user, context):
     except:
         return (await html_head("gensou : login", user) + await login_form() + HTML_END, 200, None, None)
 
-async def register_page(s, user, context):
+async def register_page(user, context):
     if REGISTRATION_CLOSED:
         return (await html_head("gensou : registration closed", user) + CLOSED_FORM + HTML_END, 200, None, None)
     if user is not None:
@@ -156,7 +156,7 @@ async def register_page(s, user, context):
     except:
         return (await html_head("gensou : register", user) + await register_form() + HTML_END, 200, None, None)
 
-async def set_pw(s, user, context):
+async def set_pw(user, context):
     if user is None:
         d = 2
     else:
@@ -199,7 +199,7 @@ async def set_pw(s, user, context):
         
     return (await html_head("gensou : error unauthorized", user) + await err_body(401) + HTML_END, 401, None, None)
 
-async def logout(s, user):
+async def logout(user):
     if user is not None:
         destroy_session(user)
     return (await html_head("gensou : logged out", None) + LOGGED_OUT + HTML_END, 200, ["clear_cookie"], None)

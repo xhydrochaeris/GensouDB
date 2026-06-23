@@ -12,16 +12,16 @@ async def serve_page(s, user, post, query):
         elif s == "wiki":
             return (await html_head("gensou : error not implemented", user) + await err_body(501) + HTML_END, 501, None, None)
         elif s == "login":
-            return await login_page(s, user, post)
+            return await login_page(user, post)
         elif s == "set_pw":
-            return await set_pw(s, user, post)
+            return await set_pw(user, post)
         elif s == "register":
-            return await register_page(s, user, post)
+            return await register_page(user, post)
         elif s == "logout":
-            return await logout(s, user)
+            return await logout(user)
         elif s == "admin":
             if get_privilege(user) == 99:
-                return await admin_page(s, user, post, query)
+                return await admin_page(user, post, query)
             else:
                 return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
         else:
