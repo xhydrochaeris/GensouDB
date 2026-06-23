@@ -55,3 +55,7 @@ async def redirect(page):
 <body>
 <h1>You are being redirected. <a href={page}>Click here</a></h1>
 """
+
+def pt2html(text):
+    # TODO
+    return text
