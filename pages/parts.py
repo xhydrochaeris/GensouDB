@@ -1,5 +1,6 @@
 from db.user import pwd_is_dummy, get_privilege
 from db.db import get_conn
+from html import escape
 
 async def html_head(t, user):
     dummy = ''
@@ -44,7 +45,7 @@ async def home_body(user):
     if user is not None:
         with get_conn() as conn:
             r = conn.execute("SELECT dname, uname FROM USER WHERE ID = ?", (user,)).fetchone()
-            t = f'You are signed in as <a href="/user/{user}">{pt2html(r[0])}</a> <span style="font-size:20px;font-weight:normal;font-style:italic;">({pt2html(r[1])})</span>'
+            t = f'You are signed in as <a href="/user/{user}">{escape(r[0])}</a> <span style="font-size:20px;font-weight:normal;font-style:italic;">({escape(r[1])})</span>'
 
     return f"""<h1 class="rainbow rainbow_text_animated">Welcome to GensouDB!</h1>
 <h2>{t}</h2>
@@ -65,16 +66,3 @@ async def redirect(page):
 <body>
 <h1>You are being redirected. <a href={page}>Click here</a></h1>
 """
-
-def pt2html(text):
-    t = ''
-    for c in str(text):
-        if c == '<':
-            t += '&lt;'
-        elif c == '>':
-            t += '&gt;'
-        elif c == '&':
-            t += '&amp;'
-        else:
-            t += c
-    return t
