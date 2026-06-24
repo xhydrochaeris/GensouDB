@@ -83,6 +83,7 @@ JS_DELETE_CONFIRM = """<style>
   const btnNo   = document.getElementById("confirm-no");
 
   function confirmDelete(event, tableName, id) {
+    event.preventDefault();
     if (event.shiftKey) {
       window.location.href = `admin?table=${tableName}&action=delete&id=${id}`;
       return;
