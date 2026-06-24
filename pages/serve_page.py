@@ -1,6 +1,6 @@
 from pages.parts import html_head, home_body, HTML_END, err_body
 from pages.login import login_page, register_page, LOGGED_IN, set_pw, logout
-from pages.admin import admin_page, admin_insert, admin_edit
+from pages.admin import admin_page, admin_insert, admin_edit, admin_search
 from pages.preferences import prefs_page
 from db.user import get_privilege
 
@@ -35,6 +35,11 @@ async def serve_page(s, user, post, query):
         elif s == "admin/edit":
             if get_privilege(user) == 99:
                 return await admin_edit(user, post)
+            else:
+                return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
+        elif s == "admin/search":
+            if get_privilege(user) == 99:
+                return await admin_search(user, query)
             else:
                 return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
         else:

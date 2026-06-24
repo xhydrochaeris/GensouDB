@@ -114,10 +114,17 @@ async def html_table(name, frm=0, to=100):
     with get_conn() as conn:
         t = f"""<p style=\"font-size: 18px;\">Showing IDs {frm}-{to}.<form action="admin">
         <input type="hidden" id="table", name="table", value="{name}">
-        <label for="from">from: </label><input type="text" id="from" name="from" value={frm}> <label for="to">to: </label>
+        <label for="from">Show IDs from: </label><input type="text" id="from" name="from" value={frm}> <label for="to">to: </label>
         <input type="text" id="to" name="to" value={to}><input class=login_submit type="submit" value="Submit">
         </form></p>
-        <p><a href=admin?table={name}&action=insert style=\"font-size: 18px;\">Insert new entry into table</a></p><table>"""
+        """
+        if name.lower() == 'user':
+            t += f"""<p style=\"font-size: 18px;\"><form action="admin/search">
+        <input type="hidden" id="table", name="table", value="{name}">
+        <label for="uname">Search by uname: </label><input type="text" id="uname" name="uname"> <label for="dname"> or dname: </label>
+        <input type="text" id="dname" name="dname"><input class=login_submit type="submit" value="Submit">
+        </form></p>"""
+        t += f'<p><a href=admin?table={name}&action=insert style=\"font-size: 18px;\">Insert new entry into table</a></p><div style="overflow-x: auto;"><table>'
         tbl = []
         hrs = []
         cnt = 0
@@ -127,8 +134,8 @@ async def html_table(name, frm=0, to=100):
             hrs = ["ID", "dname", "uname", "class", "pw_hash", "pw_date", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]
         t += "<tr>"
         for hr in hrs:
-            t += f"<th>{hr}</th>"
-        t += f"<th colspan=2 style=\"color:brown;\">{cnt} items</th></tr>"
+            t += f"<th class=\"mono-table\">{hr}</th>"
+        t += f"<th class=\"mono-table\" colspan=2 style=\"color:brown;white-space: pre;\">{cnt} items</th></tr>"
         for row in tbl:
             t += "<tr>"
             for i in range(len(hrs)):
@@ -136,13 +143,16 @@ async def html_table(name, frm=0, to=100):
                     if row[i] is None:
                         t += "<td>None</td>"
                     else:
-                        t += "<td>(not shown)</td>"
+                        t += "<td style=\"white-space: pre;\">(not shown)</td>"
                 else:
-                    t += f"<td>{escape(str(row[i]))}</td>"
+                    if row[i] is None:
+                        t += "<td>None</td>"
+                    else:
+                        t += f"<td class=\"mono-table\" style=\"white-space: pre;\">{escape(str(row[i]))}</td>"
             t += f"<td><a href=admin?table={name}&action=edit&id={row[0]} style=\"color:blue;\">Edit</a></td>"
             t += f"<td><a href=\"#\" onclick=\"confirmDelete(event, '{name}', {row[0]})\" style=\"color:blue;\">Delete</a></td>"
             t += "</tr>"
-        t += "</table><br>"
+        t += "</table></div><br>"
         return t
 
 DATE_FIELDS = {'pw_date', 'SESS_Expiry'}
@@ -161,10 +171,12 @@ async def edit_form(name, i=None):
                     t += '''<label for="PW">PW (will be hashed): </label><input type="text" id="PW" name="PW">
                             <input type="checkbox" id="pw_clear" name="pw_clear" value="yes" onchange="document.getElementById('PW').disabled = this.checked">
                             <label for="pw_clear"> Clear this user's pasword</label><br><br>'''
+                elif hrs[j] == 'ID':
+                    t += f'<label>ID: </label><input type="text" value="{str(r[j])}" disabled=true><input type="hidden" id="ID", name="ID", value="{str(r[j])}"><br><br>'
                 else:
                     val_attr = f'value="{escape(str(r[j]))}"' if r[j] is not None else ""
                     now_btn = f' <button type="button" onclick="setNow(\'{hrs[j]}\')">Now</button>' if hrs[j] in DATE_FIELDS else ""
-                    t += f'<label for="{hrs[j]}">{hrs[j]}: </label><input type="text" id="{hrs[j]}" name="{hrs[j]}" {val_attr}>{now_btn}><br><br>'
+                    t += f'<label for="{hrs[j]}">{hrs[j]}: </label><input type="text" id="{hrs[j]}" name="{hrs[j]}" {val_attr}>{now_btn}<br><br>'
         else:
             t = f'<form action=\"/admin/insert\" method=post><input type="hidden" id="table", name="table", value="{name}">'
             for j in range(len(hrs)):
@@ -181,10 +193,11 @@ async def admin_insert(user, post):
         q = post["table"]
         if q.lower() == 'user':
             with get_conn() as conn:
+                d = post['uname'] if post['dname'] == '' else post['dname']
                 if post['ID'] == '':
-                    cursor = conn.execute("INSERT INTO USER (dname, uname) VALUES (?, ?)", (post['dname'], post['uname']))
+                    cursor = conn.execute("INSERT INTO USER (dname, uname) VALUES (?, ?)", (d, post['uname']))
                 else:
-                    cursor = conn.execute("INSERT INTO USER (ID, dname, uname) VALUES (?, ?, ?)", (post['ID'], post['dname'], post['uname']))
+                    cursor = conn.execute("INSERT INTO USER (ID, dname, uname) VALUES (?, ?, ?)", (post['ID'], d, post['uname']))
                 ins_id = cursor.lastrowid
                 if post['PW'] != '':
                     conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), ins_id))
@@ -265,4 +278,33 @@ async def admin_page(user, post, query):
         except:
             return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
     else:
+        return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
+
+async def admin_search(user, query):
+    try:
+        q = query['table']
+        if q == 'user':
+            if query['uname'] != '':
+                with get_conn() as conn:
+                    row = conn.execute(
+                        "SELECT ID FROM USER WHERE uname = ?", (query['uname'],)
+                    ).fetchone()
+                    if not row:
+                        return (await admin_head() + await err_body(404) + HTML_END, 404, None, None)
+                    else:
+                        return (f"/admin?table={q}&from={dict(row)['ID']}&to={dict(row)['ID']}", 200, ["redirect"], None)
+            elif query['dname'] != '':
+                with get_conn() as conn:
+                    row = conn.execute(
+                        "SELECT ID FROM USER WHERE dname = ?", (query['dname'],)
+                    ).fetchone()
+                    if not row:
+                        return (await admin_head() + await err_body(404) + HTML_END, 404, None, None)
+                    else:
+                        return (f"/admin?table={q}&from={dict(row)['ID']}&to={dict(row)['ID']}", 200, ["redirect"], None)
+            else:
+                return (f"/admin?table={q}", 200, ["redirect"], None)
+        else:
+            return (await admin_head() + await err_body(501) + HTML_END, 501, None, None)
+    except:
         return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)

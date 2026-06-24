@@ -286,6 +286,10 @@ td {
   padding:5px;
 }
 
+.mono-table {
+  font-family: monospace;
+}
+
 .green-mark {
   background-color: rgb(0, 212, 0);
   color: white;
