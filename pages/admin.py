@@ -103,6 +103,13 @@ JS_DELETE_CONFIRM = """<style>
   }
 </script>"""
 
+JS_NOW_BTN = """<script>
+  function setNow(fieldId) {
+    const now = new Date();
+    document.getElementById(fieldId).value = now.toISOString();
+  }
+</script>"""
+
 async def html_table(name, frm=0, to=100):
     with get_conn() as conn:
         t = f"""<p style=\"font-size: 18px;\">Showing IDs {frm}-{to}.<form action="admin">
@@ -138,6 +145,7 @@ async def html_table(name, frm=0, to=100):
         t += "</table><br>"
         return t
 
+DATE_FIELDS = {'pw_date', 'SESS_Expiry'}
 async def edit_form(name, i=None):
     with get_conn() as conn:
         hrs = []
@@ -151,20 +159,20 @@ async def edit_form(name, i=None):
             for j in range(len(hrs)):
                 if hrs[j] == 'pw_hash':
                     t += '''<label for="PW">PW (will be hashed): </label><input type="text" id="PW" name="PW">
-                            <input type="checkbox" id="pw_clear" name="pw_clear" value="yes">
+                            <input type="checkbox" id="pw_clear" name="pw_clear" value="yes" onchange="document.getElementById('PW').disabled = this.checked">
                             <label for="pw_clear"> Clear this user's pasword</label><br><br>'''
                 else:
-                    if r[j] is None:
-                        t += f'<label for="{hrs[j]}">{hrs[j]}: </label><input type="text" id="{hrs[j]}" name="{hrs[j]}"><br><br>'
-                    else:
-                        t += f'<label for="{hrs[j]}">{hrs[j]}: </label><input type="text" id="{hrs[j]}" name="{hrs[j]}" value="{escape(str(r[j]))}"><br><br>'
+                    val_attr = f'value="{escape(str(r[j]))}"' if r[j] is not None else ""
+                    now_btn = f' <button type="button" onclick="setNow(\'{hrs[j]}\')">Now</button>' if hrs[j] in DATE_FIELDS else ""
+                    t += f'<label for="{hrs[j]}">{hrs[j]}: </label><input type="text" id="{hrs[j]}" name="{hrs[j]}" {val_attr}>{now_btn}><br><br>'
         else:
             t = f'<form action=\"/admin/insert\" method=post><input type="hidden" id="table", name="table", value="{name}">'
             for j in range(len(hrs)):
                 if hrs[j] == 'pw_hash':
                     t += f'<label for="PW">PW (will be hashed): </label><input type="text" id="PW" name="PW"><br><br>'
                 else:
-                    t += f'<label for="{hrs[j]}">{hrs[j]}: </label><input type="text" id="{hrs[j]}" name="{hrs[j]}"><br><br>'
+                    now_btn = f' <button type="button" onclick="setNow(\'{hrs[j]}\')">Now</button>' if hrs[j] in DATE_FIELDS else ""
+                    t += f'<label for="{hrs[j]}">{hrs[j]}: </label><input type="text" id="{hrs[j]}" name="{hrs[j]}">{now_btn}<br><br>'
         t += '<input class=login_submit type="submit" value="Submit"></form><br>'
     return t
 
@@ -193,14 +201,14 @@ async def admin_edit(user, post):
         i = int(post['ID'])
         if q.lower() == 'user':
             with get_conn() as conn:
-                if post['PW'] != '':
-                    conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), i))
                 try:
                     p = post['pw_clear']
                 except:
                     p = "no"
                 if p == "yes":
                     conn.execute("UPDATE USER SET pw_hash = NULL WHERE ID = ?", (i,))
+                elif post['PW'] != '':
+                    conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), i))
                 for f in ["dname", "uname","class", "pw_date", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
                     if post[f] != '':
                         conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], i))
@@ -234,14 +242,14 @@ async def admin_page(user, post, query):
     elif a == "insert":
         try:
             q = query['table']
-            return (await admin_head() + await edit_form(q) + HTML_END, 200, None, None)
+            return (await admin_head(JS_NOW_BTN) + await edit_form(q) + HTML_END, 200, None, None)
         except:
             return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
     elif a == "edit":
         try:
             q = query['table']
             i = int(query['id'])
-            return (await admin_head() + await edit_form(q, i) + HTML_END, 200, None, None)
+            return (await admin_head(JS_NOW_BTN) + await edit_form(q, i) + HTML_END, 200, None, None)
         except:
             return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
     elif a == "delete":
