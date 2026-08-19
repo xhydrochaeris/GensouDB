@@ -6,7 +6,7 @@
 from pages.parts import html_head, home_body, HTML_END, err_body
 from pages.login import login_page, register_page, LOGGED_IN, set_pw, logout
 from pages.admin import admin_page, admin_insert, admin_edit, admin_search
-from pages.preferences import prefs_page
+from pages.user import user_profile, prefs_page
 from db.user import get_privilege
 
 # `serve_page()` takes four inputs and produces a 4-tuple as its output
@@ -29,8 +29,13 @@ async def serve_page(s, user, post, query):
             return await set_pw(user, post)
         elif s == "register":
             return await register_page(user, post)
+        elif s == "user":
+            return await user_profile(user, query)
         elif s == "prefs":
-            return await prefs_page(user, post)
+            if user != None:
+                return await prefs_page(user)
+            else:
+                return (await html_head("gensou : error unauthorized", user) + await err_body(401) + HTML_END, 401, None, None)
         elif s == "logout":
             return await logout(user)
         elif s == "admin":

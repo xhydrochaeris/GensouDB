@@ -1,4 +1,6 @@
 # `admin.py` - This file contains the admin pages, which allow users with sufficient privileges to edit tables by a web interface
+# This should only be visible to admins (99) and moderators (50).
+# Moderators can use this to gain direct & intuitive control over certain SQL tables
 
 from pages.parts import html_head, HTML_END, err_body, redirect
 from db.db import get_conn
@@ -25,7 +27,7 @@ async def admin_head(user, include=''):
             <a href="/search">Search</a>
             <a href="/wiki">Wiki</a>
             <div class="dropdown">User: {escape(r[0])} <span style="font-style:italic;">({escape(r[1])})</span>
-  <div class="dropdown-content"><a href="/user/{user}">Profile</a><a href="/prefs">Preferences</a><a href="/logout">Log out</a>
+  <div class="dropdown-content"><a href="/user?id={user}">Profile</a><a href="/prefs">Preferences</a><a href="/logout">Log out</a>
             <a href="/admin">Admin</a></div></div>
         </header>
     </div>

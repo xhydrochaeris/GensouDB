@@ -15,7 +15,7 @@ async def html_head(t, user):
         with get_conn() as conn:
             r = conn.execute("SELECT dname, uname FROM USER WHERE ID = ?", (user,)).fetchone()
         lin = f'''<div class="dropdown">User: {escape(r[0])} <span style="font-style:italic;">({escape(r[1])})</span>
-  <div class="dropdown-content"><a href="/user/{user}">Profile</a><a href="/prefs">Preferences</a><a href="/logout">Log out</a>'''
+  <div class="dropdown-content"><a href="/user?id={user}">Profile</a><a href="/prefs">Preferences</a><a href="/logout">Log out</a>'''
         if pwd_is_dummy(user):
             dummy = '<h1 style="color:red">Your current password is outdated. Please <a href="/set_pw"">set a new one</a>.</h1>'
         if get_privilege(user) >= 50:
@@ -44,7 +44,7 @@ async def html_head(t, user):
 # HTML end: this is a static footer at the end of the HTML, and also closes the open tags
 HTML_END = """<footer class="center_footer rainbow-border">
     <h2>website developed by</h2>
-    <a href="/user/0">CIPHER 【零】</a>
+    <a href="/user?id=0">CIPHER 【零】</a>
 </footer>
 </body>
 </html>
@@ -60,7 +60,7 @@ async def home_body(user):
     if user is not None:
         with get_conn() as conn:
             r = conn.execute("SELECT dname, uname FROM USER WHERE ID = ?", (user,)).fetchone()
-            t = f'You are signed in as <a href="/user/{user}">{escape(r[0])}</a> <span style="font-size:20px;font-weight:normal;font-style:italic;">({escape(r[1])})</span>'
+            t = f'You are signed in as <a href="/user?id={user}">{escape(r[0])}</a> <span style="font-size:20px;font-weight:normal;font-style:italic;">({escape(r[1])})</span>'
 
     return f"""<h1 class="rainbow rainbow_text_animated">Welcome to GensouDB!</h1>
 <h2>{t}</h2>
