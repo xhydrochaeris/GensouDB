@@ -5,6 +5,10 @@
 -- File/Item type enum reference:
 -- 0: Music, 1: Video, 2: Scan, 3: Physical, 4: Document, 5: Other
 
+-- User class enum reference:
+-- 0: User, 5: Member, 10: Contributor, 20: PowerUser,
+-- 30: Elite, 50: Moderator, 99: Admin
+
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
 
@@ -54,7 +58,7 @@ CREATE TABLE ITEMS (
     Medium  TEXT NOT NULL,                      -- "12\" Vinyl", "CD", "Cassette", etc.
     Type    INTEGER NOT NULL DEFAULT 0,         -- enum: 0=Music, 1=Video, 2=Physical
     Disc    INTEGER DEFAULT 1,
-    Side    TEXT CHECK(length(Side) <= 1),      -- "A", "B", NULL if not applicable
+    Side    TEXT,                               -- Side of physical medium
     Details TEXT
 );
 
@@ -87,13 +91,13 @@ CREATE TABLE USER (
                     length(uname) <= 20 AND
                     uname GLOB '*[^a-zA-Z0-9_-]*' = 0
                 ),
-    class       INT NOT NULL DEFAULT 0, -- enum 0=User 1=Member 2=Contributor 3=PowerUser 4=Elite 50=Moderator 99=Admin
+    class       INT NOT NULL DEFAULT 0,                          -- User class (enum)
     pw_hash     TEXT,                                            -- Password (hashed)
     pw_date     TEXT,
-    Prefs       TEXT DEFAULT '{}',                               -- JSON Array
     SESS_ID     TEXT,                                            -- Session ID
     SESS_Expiry TEXT,                                            -- Session Expiry
     dummy_pw    BOOLEAN NOT NULL DEFAULT 1                       -- The password is not initialized by the user yet
+    -- Add more preferences later
 );
 
 INSERT INTO USER (ID, dname, uname, class) VALUES (0, 'CIPHER 【零】', 'cipher', 99);

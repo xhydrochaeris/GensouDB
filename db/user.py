@@ -71,6 +71,16 @@ def verify_password(uid, plaintext):
                 except Exception:
                     return 0 # Password does not match
 
+def get_uname(uid):
+    with get_conn() as conn:
+        r = conn.execute("SELECT uname FROM USER WHERE ID = ?", (user,)).fetchone()
+        return r[0]
+
+def get_dname(uid):
+    with get_conn() as conn:
+        r = conn.execute("SELECT dname FROM USER WHERE ID = ?", (user,)).fetchone()
+        return r[0]
+
 def pwd_is_dummy(uid):
     # Return 0 (false), 1 (true), 2 (error)
     with get_conn() as conn:

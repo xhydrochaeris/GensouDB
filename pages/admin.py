@@ -1,9 +1,11 @@
 from pages.parts import html_head, HTML_END, err_body, redirect
 from db.db import get_conn
-from db.user import hash_password
+from db.user import hash_password, get_privilege
 from html import escape
 
-async def admin_head(include=''):
+async def admin_head(user, include=''):
+    with get_conn() as conn:
+        r = conn.execute("SELECT dname, uname FROM USER WHERE ID = ?", (user,)).fetchone()
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -16,8 +18,11 @@ async def admin_head(include=''):
         <a href="/home"><img src="/static_web/gensou-logo.png" style="max-height:50px; height:auto; width:auto;"></a>
         <header>
             <a href="/home">Home</a>
-            <a href="/admin">Admin</a>
-            <a href="/prefs">Preferences</a><a href="/logout">Log out</a>
+            <a href="/search">Search</a>
+            <a href="/wiki">Wiki</a>
+            <div class="dropdown">User: {escape(r[0])} <span style="font-style:italic;">({escape(r[1])})</span>
+  <div class="dropdown-content"><a href="/user/{user}">Profile</a><a href="/prefs">Preferences</a><a href="/logout">Log out</a>
+            <a href="/admin">Admin</a></div></div>
         </header>
     </div>
     <br>
@@ -120,10 +125,10 @@ async def html_table(name, frm=0, to=100):
         """
         if name.lower() == 'user':
             t += f"""<p style=\"font-size: 18px;\"><form action="admin/search">
-        <input type="hidden" id="table", name="table", value="{name}">
-        <label for="uname">Search by uname: </label><input type="text" id="uname" name="uname"> <label for="dname"> or dname: </label>
-        <input type="text" id="dname" name="dname"><input class=login_submit type="submit" value="Submit">
-        </form></p>"""
+            <input type="hidden" id="table", name="table", value="{name}">
+            <label for="uname">Search by uname: </label><input type="text" id="uname" name="uname"> <label for="dname"> or dname: </label>
+            <input type="text" id="dname" name="dname"><input class=login_submit type="submit" value="Submit">
+            </form></p>"""
         t += f'<p><a href=admin?table={name}&action=insert style=\"font-size: 18px;\">Insert new entry into table</a></p><div style="overflow-x: auto;"><table>'
         tbl = []
         hrs = []
@@ -131,7 +136,7 @@ async def html_table(name, frm=0, to=100):
         if name.lower() == "user":
             tbl = conn.execute("SELECT * FROM USER WHERE ID >= ? AND ID <= ?", (frm, to)).fetchall()
             cnt = len(tbl)
-            hrs = ["ID", "dname", "uname", "class", "pw_hash", "pw_date", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]
+            hrs = ["ID", "dname", "uname", "class", "pw_hash", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]
         t += "<tr>"
         for hr in hrs:
             t += f"<th class=\"mono-table\">{hr}</th>"
@@ -163,7 +168,7 @@ async def edit_form(name, i=None):
         if name.lower() == "user":
             if (i is not None):
                 r = conn.execute("SELECT * FROM USER WHERE ID = ?", (i,)).fetchone()
-            hrs = ["ID", "dname", "uname", "class", "pw_hash", "pw_date", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]
+            hrs = ["ID", "dname", "uname", "class", "pw_hash", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]
         if i is not None:
             t = f'<form action=\"/admin/edit\" method=post><input type="hidden" id="table", name="table", value="{name}">'
             for j in range(len(hrs)):
@@ -192,6 +197,8 @@ async def admin_insert(user, post):
     try:
         q = post["table"]
         if q.lower() == 'user':
+            if get_privilege(user) != 99:
+                return (await admin_head(user) + await err_body(401) + HTML_END, 401, None, None)
             with get_conn() as conn:
                 d = post['uname'] if post['dname'] == '' else post['dname']
                 if post['ID'] == '':
@@ -201,16 +208,18 @@ async def admin_insert(user, post):
                 ins_id = cursor.lastrowid
                 if post['PW'] != '':
                     conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), ins_id))
-                for f in ["class", "Prefs", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
+                for f in ["class", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
                     if post[f] != '':
                         conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], ins_id))
-        return (await admin_head() + f'<h1>Item inserted at ID={ins_id}!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
+        return (await admin_head(user) + f'<h1>Item inserted at ID={ins_id}!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
     except:
-        return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
+        return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
 
 async def admin_edit(user, post):
     try:
         q = post["table"]
+        if (q == "user") and (get_privilege(user) != 99):
+            return (await admin_head(user) + await err_body(401) + HTML_END, 401, None, None)
         i = int(post['ID'])
         if q.lower() == 'user':
             with get_conn() as conn:
@@ -222,14 +231,14 @@ async def admin_edit(user, post):
                     conn.execute("UPDATE USER SET pw_hash = NULL WHERE ID = ?", (i,))
                 elif post['PW'] != '':
                     conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), i))
-                for f in ["dname", "uname","class", "pw_date", "Prefs", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
+                for f in ["dname", "uname","class", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
                     if post[f] != '':
                         conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], i))
                     else:
                         conn.execute(f"UPDATE USER SET {f} = NULL WHERE ID = ?", (i,))
-        return (await admin_head() + f'<h1>Item at ID={i} updated!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
+        return (await admin_head(user) + f'<h1>Item at ID={i} updated!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
     except:
-        return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
+        return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
 
 async def admin_page(user, post, query):
     try:
@@ -249,36 +258,42 @@ async def admin_page(user, post, query):
             t = 100
         try:
             q = query['table']
-            return (await admin_head(JS_DELETE_CONFIRM) + await html_table(q, f, t) + HTML_END, 200, None, None)
+            return (await admin_head(user, JS_DELETE_CONFIRM) + await html_table(q, f, t) + HTML_END, 200, None, None)
         except:
-            return (await admin_head() + "<h1>Select a table to view from the header above.</h1>" + HTML_END, 200, None, None)
+            return (await admin_head(user) + "<h1>Select a table to view from the header above.</h1>" + HTML_END, 200, None, None)
     elif a == "insert":
         try:
             q = query['table']
-            return (await admin_head(JS_NOW_BTN) + await edit_form(q) + HTML_END, 200, None, None)
+            if (q == "user") and (get_privilege(user) != 99):
+                return (await admin_head(user) + await err_body(401) + HTML_END, 401, None, None)
+            return (await admin_head(user, JS_NOW_BTN) + await edit_form(q) + HTML_END, 200, None, None)
         except:
-            return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
+            return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
     elif a == "edit":
         try:
             q = query['table']
+            if (q == "user") and (get_privilege(user) != 99):
+                return (await admin_head(user) + await err_body(401) + HTML_END, 401, None, None)
             i = int(query['id'])
-            return (await admin_head(JS_NOW_BTN) + await edit_form(q, i) + HTML_END, 200, None, None)
+            return (await admin_head(user, JS_NOW_BTN) + await edit_form(q, i) + HTML_END, 200, None, None)
         except:
-            return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
+            return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
     elif a == "delete":
         try:
             i = int(query["id"])
             q = query['table']
+            if (q == "user") and (get_privilege(user) != 99):
+                return (await admin_head(user) + await err_body(401) + HTML_END, 401, None, None)
             if q.lower() == 'user':
                 if i == 0:
-                    return (await admin_head() + f'<h1 style="color:red;">You cannot delete the admin user!!!!!!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 400, None, None)
+                    return (await admin_head(user) + f'<h1 style="color:red;">You cannot delete the admin user!!!!!!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 400, None, None)
                 with get_conn() as conn:
                     conn.execute("DELETE FROM USER WHERE ID = ?", (i,))
-            return (await admin_head() + f'<h1 class="rainbow rainbow_text_animated">Item was deleted!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
+            return (await admin_head(user) + f'<h1 class="rainbow rainbow_text_animated">Item was deleted!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
         except:
-            return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
+            return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
     else:
-        return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
+        return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
 
 async def admin_search(user, query):
     try:
@@ -290,7 +305,7 @@ async def admin_search(user, query):
                         "SELECT ID FROM USER WHERE uname = ?", (query['uname'],)
                     ).fetchone()
                     if not row:
-                        return (await admin_head() + await err_body(404) + HTML_END, 404, None, None)
+                        return (await admin_head(user) + await err_body(404) + HTML_END, 404, None, None)
                     else:
                         return (f"/admin?table={q}&from={dict(row)['ID']}&to={dict(row)['ID']}", 200, ["redirect"], None)
             elif query['dname'] != '':
@@ -299,12 +314,12 @@ async def admin_search(user, query):
                         "SELECT ID FROM USER WHERE dname = ?", (query['dname'],)
                     ).fetchone()
                     if not row:
-                        return (await admin_head() + await err_body(404) + HTML_END, 404, None, None)
+                        return (await admin_head(user) + await err_body(404) + HTML_END, 404, None, None)
                     else:
                         return (f"/admin?table={q}&from={dict(row)['ID']}&to={dict(row)['ID']}", 200, ["redirect"], None)
             else:
                 return (f"/admin?table={q}", 200, ["redirect"], None)
         else:
-            return (await admin_head() + await err_body(501) + HTML_END, 501, None, None)
+            return (await admin_head(user) + await err_body(501) + HTML_END, 501, None, None)
     except:
-        return (await admin_head() + await err_body(400) + HTML_END, 400, None, None)
+        return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)

@@ -1,9 +1,20 @@
+# `serve_page.py` - This file determines the page URLs that can be requested by the user
+# This file doesn't necessarily contain any logic for the pages themselves, other than
+# the privilege check for admin pages. It just calls functions that represent the target pages,
+# or returns an error if something is wrong with the request.
+
 from pages.parts import html_head, home_body, HTML_END, err_body
 from pages.login import login_page, register_page, LOGGED_IN, set_pw, logout
 from pages.admin import admin_page, admin_insert, admin_edit, admin_search
 from pages.preferences import prefs_page
 from db.user import get_privilege
 
+# `serve_page()` takes four inputs and produces a 4-tuple as its output
+# - `s` is the relative URL requested
+# - `user` is the user ID of the requester (session was already verified by server)
+# - `post` is a Multidict containing the contents of POST, if they exist
+# - `query` is a Multidict containing the contents of the URL query
+# The returned tuple is explained in the server's `handle()`
 async def serve_page(s, user, post, query):
     if s:
         if s == "home":
@@ -23,22 +34,22 @@ async def serve_page(s, user, post, query):
         elif s == "logout":
             return await logout(user)
         elif s == "admin":
-            if get_privilege(user) == 99:
+            if get_privilege(user) >= 50:
                 return await admin_page(user, post, query)
             else:
                 return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
         elif s == "admin/insert":
-            if get_privilege(user) == 99:
+            if get_privilege(user) >= 50:
                 return await admin_insert(user, post)
             else:
                 return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
         elif s == "admin/edit":
-            if get_privilege(user) == 99:
+            if get_privilege(user) >= 50:
                 return await admin_edit(user, post)
             else:
                 return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
         elif s == "admin/search":
-            if get_privilege(user) == 99:
+            if get_privilege(user) >= 50:
                 return await admin_search(user, query)
             else:
                 return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)

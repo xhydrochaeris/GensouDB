@@ -1,16 +1,27 @@
+# `parts.py` - This file contains some parts which are commonly included in other pages,
+# such as headers and footers. These are glued together by the other page functions to produce
+# HTML pages that are served to the user.
+
 from db.user import pwd_is_dummy, get_privilege
 from db.db import get_conn
 from html import escape
 
+# Website header: placed at the beginning of the HTML. contains a header which changes based on
+# the user, and a custom page title that can be set by the caller
 async def html_head(t, user):
     dummy = ''
     lin = '<a href="/login">Log in</a><a href="/register">Register</a>'
     if user is not None: # None if not logged in, id if logged in
-        lin = f'<a href="/user/{user}">Profile</a><a href="/prefs">Preferences</a><a href="/logout">Log out</a>'
+        with get_conn() as conn:
+            r = conn.execute("SELECT dname, uname FROM USER WHERE ID = ?", (user,)).fetchone()
+        lin = f'''<div class="dropdown">User: {escape(r[0])} <span style="font-style:italic;">({escape(r[1])})</span>
+  <div class="dropdown-content"><a href="/user/{user}">Profile</a><a href="/prefs">Preferences</a><a href="/logout">Log out</a>'''
         if pwd_is_dummy(user):
             dummy = '<h1 style="color:red">Your current password is outdated. Please <a href="/set_pw"">set a new one</a>.</h1>'
-        if get_privilege(user) == 99:
-            lin += f'<a href="/admin">Admin</a>'
+        if get_privilege(user) >= 50:
+            lin += '<a href="/admin">Admin</a></div></div>'
+        else:
+            lin += '</div></div>'
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -30,16 +41,20 @@ async def html_head(t, user):
     {dummy}
 """
 
+# HTML end: this is a static footer at the end of the HTML, and also closes the open tags
 HTML_END = """<footer class="center_footer rainbow-border">
     <h2>website developed by</h2>
     <a href="/user/0">CIPHER 【零】</a>
 </footer>
 </body>
+</html>
 """
 
+# Error body: This returns a comical error page with a corresponding picture from http.cat
 async def err_body(n):
     return f'<div class="center_img"><img src=https://http.cat/images/{n}.jpg></div>'
 
+# Homepage body: This is a home page body that changes based on the user.
 async def home_body(user):
     t = "You are not logged in."
     if user is not None:
@@ -55,6 +70,7 @@ async def home_body(user):
 </ul>
 """
 
+# legacy redirect (unused)
 async def redirect(page):
     return f"""<!DOCTYPE html>
 <html>
