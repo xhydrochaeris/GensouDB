@@ -41,7 +41,7 @@ def create_user(dname, uname, pwd):
     now = datetime.now(timezone.utc).isoformat()
     with get_conn() as conn:
         cursor = conn.execute(
-            "INSERT INTO USER (dname, uname, pw_hash, pw_date, dummy_pw) values (?, ?, ?, ?, ?)", (dname, uname, phash, now, False)
+            "INSERT INTO USER (dname, uname, pw_hash, created, pw_date, dummy_pw) values (?, ?, ?, ?, ?, ?)", (dname, uname, phash, now, now, False)
         )
         return cursor.lastrowid
 

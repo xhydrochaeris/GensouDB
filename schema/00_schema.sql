@@ -93,7 +93,8 @@ CREATE TABLE USER (
                 ),
     class       INT NOT NULL DEFAULT 0,                          -- User class (enum)
     pw_hash     TEXT,                                            -- Password (hashed)
-    pw_date     TEXT,
+    created     TEXT,                                            -- Account creation date
+    pw_date     TEXT,                                            -- Latest Password date
     SESS_ID     TEXT,                                            -- Session ID
     SESS_Expiry TEXT,                                            -- Session Expiry
     dummy_pw    BOOLEAN NOT NULL DEFAULT 1                       -- The password is not initialized by the user yet

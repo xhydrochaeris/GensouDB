@@ -48,11 +48,6 @@ async def serve_page(s, user, post, query):
                 return await admin_edit(user, post)
             else:
                 return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
-        elif s == "admin/search":
-            if get_privilege(user) >= 50:
-                return await admin_search(user, query)
-            else:
-                return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
         else:
             return (await html_head("gensou : error not found", user) + await err_body(404) + HTML_END, 404, None, None)
     else:
