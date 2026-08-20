@@ -1,0 +1,203 @@
+/* `muon.css` - Muon theme for GensouDB
+ * The theme can be selected by the user in Preferences */
+
+body {
+  background-color: #220000;
+  background-image: url("/static_web/366743.png");
+  background-repeat: repeat;
+  background-size: auto;
+  background-size: 64px 64px;
+  background-attachment: fixed;
+  animation: diagScroll 6s linear infinite;
+}
+
+@keyframes diagScroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -64px -128px; /* moves up-left */
+  }
+}
+
+::selection {
+    background-color: #8b0000;
+    color: #fff;
+}
+
+/* Including custom fonts so that even Linux/Android displays
+   webpage using Times New Roman */
+@font-face {
+    font-family: 'TNR';
+    src: url(/static_web/font/times.ttf);
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'TNR';
+    src: url(/static_web/font/timesbd.ttf);
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'TNR';
+    src: url(/static_web/font/timesi.ttf);
+    font-weight: normal;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'TNR';
+    src: url(/static_web/font/timesbi.ttf);
+    font-weight: bold;
+    font-style: italic;
+}
+
+* {
+    font-family: 'TNR';
+  }
+
+li,h1,h2,p{
+  color: yellow;
+}
+summary {
+  color: yellow;
+}
+summary:hover{
+  color:#18f0ff;
+}
+a{
+color: rgb(0, 255, 170);
+}
+.rainbow_link {
+  color: rgba(0, 0, 0, 0);
+}
+header a:hover{
+background-image: linear-gradient(
+    #ff9634,
+    #e63a24
+  );;
+color: purple;
+}
+a:hover{
+background-image: linear-gradient(
+    #ff9634,
+    #e63a24
+  );;
+color: purple;
+}
+
+header{
+background-color: rgba(122, 16, 16, 0.6);
+
+}
+header a{
+  color: white;
+}
+
+form label{
+  color: yellow;
+}
+
+.RightColumn { 
+  background-color: rgba(0, 0, 139, 0.3);
+}
+
+.rainbow_text_animated {
+    background-image: linear-gradient(to right, yellow, #0099ff , #00ff00, #ff3399, yellow);
+    animation: rainbow_animation 12s linear infinite;
+    background-size: 20% 100%;
+}
+
+@keyframes rainbow_animation {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 100% 0;
+    }
+}
+
+/* Animated rainbow layer */
+.rainbow-border::before {
+  background-image: linear-gradient(
+    to right,
+    #6666ff,
+    #0099ff,
+    #00ff00,
+    #ff3399,
+    #6666ff
+  );
+  background-size: 20% 100%;
+  animation: rainbow_animation 12s linear infinite;
+}
+
+header a:hover::before {
+  background-image: linear-gradient(
+    to right,
+    rgb(0, 255, 170),
+    #0099ff,
+    #00ff00,
+    #ff3399,
+    rgb(0, 255, 170)
+  );
+  background-size: 60% 100%;
+  animation: rainbow_animation 12s linear infinite;
+}
+
+table, th, td {
+  font-family: TNR;
+  color: darkblue;
+  border: 1px solid indigo;
+  background-color:teal;
+}
+th {
+  background-color: violet;
+}
+td {
+  background-color: white;
+}
+
+.green-mark {
+  background-color: rgb(0, 212, 0);
+  color: white;
+}
+
+.yellow-mark {
+  background-color: yellow;
+  color: black;
+}
+
+.red-mark {
+  background-color: red;
+  color: white;
+}
+
+header .dropdown{
+  color: white;
+}
+
+.dropdown-content {
+  background-color: #a02020;
+}
+
+header .dropdown:hover {
+  background-image: linear-gradient(
+    #ff9634,
+    #e63a24
+  );;
+  color: purple;
+}
+
+header .dropdown:hover::before {
+  background-image: linear-gradient(
+    to right,
+    rgb(0, 255, 170),
+                              #0099ff,
+                              #00ff00,
+                              #ff3399,
+                              rgb(0, 255, 170)
+  );
+  background-size: 60% 100%;
+  animation: rainbow_animation 12s linear infinite;
+}

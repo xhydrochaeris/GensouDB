@@ -15,15 +15,15 @@ def get_uid(username):
         else:
             return dict(row)['ID']
 
-def dname_collision(dname):
+def get_uid_d(dname):
     with get_conn() as conn:
         row = conn.execute(
-            "SELECT * FROM USER WHERE dname = ?", (dname,)
+            "SELECT ID FROM USER WHERE dname = ?", (dname,)
         ).fetchone()
         if not row:
-            return False
+            return -1
         else:
-            return True
+            return dict(row)['ID']
 
 def hash_password(plaintext: str) -> str:
     return ph.hash(plaintext)
@@ -149,3 +149,14 @@ def get_privilege(uid):
         if not row:
             return -1 # User ID doesn't exist'
         return dict(row)['class']
+
+def get_style(uid):
+    with get_conn() as conn:
+        if uid is None:
+            return 'default' # Not logged in
+        row = conn.execute(
+            "SELECT theme FROM USER WHERE ID = ?", (uid,)
+        ).fetchone()
+        if not row:
+            return 'default' # User ID doesn't exist'
+        return dict(row)['theme']

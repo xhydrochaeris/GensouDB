@@ -2,20 +2,24 @@
 # This should only be visible to admins (99) and moderators (50).
 # Moderators can use this to gain direct & intuitive control over certain SQL tables
 
-from pages.parts import html_head, HTML_END, err_body, redirect
+from pages.parts import html_head, HTML_END, err_body, redirect, DEFAULT_STYLE
 from db.db import get_conn
-from db.user import hash_password, get_privilege
+from db.user import hash_password, get_privilege, get_style
 from html import escape
 
 # Admin header. Much like the html_head() function, but it doesn't check privileges, adds
 # a second bar to navigate tables, and can include JS
 async def admin_head(user, include=''):
+    style = get_style(user)
+    if style == 'default':
+        style = DEFAULT_STYLE
     with get_conn() as conn:
         r = conn.execute("SELECT dname, uname FROM USER WHERE ID = ?", (user,)).fetchone()
     return f"""<!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="/static_web/style.css">
+<link rel="stylesheet" href="/static_web/style/base.css">
+<link rel="stylesheet" href="/static_web/style/{style}.css">
 <title>gensou admin page</title>
 {include}
 </head>
@@ -140,7 +144,7 @@ async def admin_view(name, frm=0, to=100):
         cnt = 0
         if name.lower() == "user":
             tbl = conn.execute("SELECT * FROM USER WHERE ID >= ? AND ID <= ?", (frm, to)).fetchall()
-            hrs = ["ID", "dname", "uname", "class", "pw_hash", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]
+            hrs = ["ID", "dname", "uname", "class", "pw_hash", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']
         t += await html_table(name, tbl, hrs)
         t += "<br>"
         return t
@@ -150,8 +154,8 @@ async def admin_search(name, post):
         x_tup = ()
         if name.lower() == "user":
             x_string = "SELECT * FROM USER"
-            hrs = ["ID", "dname", "uname", "class", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]
-            hrs_d = ["ID", "dname", "uname", "class", "created", "pw_hash", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]
+            hrs = ["ID", "dname", "uname", "class", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']
+            hrs_d = ["ID", "dname", "uname", "class", "created", "pw_hash", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']
         else:
             return []
         for f in hrs:
@@ -215,7 +219,7 @@ async def edit_form(user, name, i=None, search=False):
                 return (await admin_head(user) + await err_body(401) + HTML_END, 401, None, None)
             if (i is not None):
                 r = conn.execute("SELECT * FROM USER WHERE ID = ?", (i,)).fetchone()
-            hrs = ["ID", "dname", "uname", "class", "pw_hash", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]
+            hrs = ["ID", "dname", "uname", "class", "pw_hash", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']
         if i is not None:
             t = f'<form action=\"/admin/edit\" method=post><input type="hidden" id="table", name="table", value="{name}">'
             for j in range(len(hrs)):
@@ -260,7 +264,7 @@ async def admin_insert(user, post):
                 ins_id = cursor.lastrowid
                 if post['PW'] != '':
                     conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), ins_id))
-                for f in ["class", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
+                for f in ["class", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']:
                     if post[f] != '':
                         conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], ins_id))
         return (await admin_head(user) + f'<h1>Item inserted at ID={ins_id}!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
@@ -284,7 +288,7 @@ async def admin_edit(user, post):
                     conn.execute("UPDATE USER SET pw_hash = NULL WHERE ID = ?", (i,))
                 elif post['PW'] != '':
                     conn.execute("UPDATE USER SET pw_hash = ? WHERE ID = ?", (hash_password(post['PW']), i))
-                for f in ["dname", "uname","class", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw"]:
+                for f in ["dname", "uname","class", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']:
                     if post[f] != '':
                         conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], i))
                     else:

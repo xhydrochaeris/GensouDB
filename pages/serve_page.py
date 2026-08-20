@@ -4,7 +4,7 @@
 # or returns an error if something is wrong with the request.
 
 from pages.parts import html_head, home_body, HTML_END, err_body
-from pages.login import login_page, register_page, LOGGED_IN, set_pw, logout
+from pages.login import login_page, register_page, LOGGED_IN, set_pw, logout, set_uname
 from pages.admin import admin_page, admin_insert, admin_edit, admin_search
 from pages.user import user_profile, prefs_page
 from db.user import get_privilege
@@ -27,13 +27,15 @@ async def serve_page(s, user, post, query):
             return await login_page(user, post)
         elif s == "set_pw":
             return await set_pw(user, post)
+        elif s == "set_uname":
+            return await set_uname(user, post)
         elif s == "register":
             return await register_page(user, post)
         elif s == "user":
             return await user_profile(user, query)
         elif s == "prefs":
             if user != None:
-                return await prefs_page(user)
+                return await prefs_page(user, post)
             else:
                 return (await html_head("gensou : error unauthorized", user) + await err_body(401) + HTML_END, 401, None, None)
         elif s == "logout":

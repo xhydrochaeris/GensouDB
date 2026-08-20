@@ -97,8 +97,9 @@ CREATE TABLE USER (
     pw_date     TEXT,                                            -- Latest Password date
     SESS_ID     TEXT,                                            -- Session ID
     SESS_Expiry TEXT,                                            -- Session Expiry
-    dummy_pw    BOOLEAN NOT NULL DEFAULT 1                       -- The password is not initialized by the user yet
-    -- Add more preferences later
+    dummy_pw    BOOLEAN NOT NULL DEFAULT 1,                      -- The password is not initialized by the user yet
+    -- Add more preferences
+    theme       TEXT NOT NULL DEFAULT 'default'
 );
 
 INSERT INTO USER (ID, dname, uname, class) VALUES (0, 'CIPHER 【零】', 'cipher', 99);

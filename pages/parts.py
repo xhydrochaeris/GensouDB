@@ -2,13 +2,18 @@
 # such as headers and footers. These are glued together by the other page functions to produce
 # HTML pages that are served to the user.
 
-from db.user import pwd_is_dummy, get_privilege
+from db.user import pwd_is_dummy, get_privilege, get_style
 from db.db import get_conn
 from html import escape
 
+DEFAULT_STYLE = 'muon'
+
 # Website header: placed at the beginning of the HTML. contains a header which changes based on
 # the user, and a custom page title that can be set by the caller
-async def html_head(t, user):
+async def html_head(title, user):
+    style = get_style(user)
+    if style == 'default':
+        style = DEFAULT_STYLE
     dummy = ''
     lin = '<a href="/login">Log in</a><a href="/register">Register</a>'
     if user is not None: # None if not logged in, id if logged in
@@ -25,8 +30,9 @@ async def html_head(t, user):
     return f"""<!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="/static_web/style.css">
-<title>{t}</title>
+<link rel="stylesheet" href="/static_web/style/base.css">
+<link rel="stylesheet" href="/static_web/style/{style}.css">
+<title>{title}</title>
 </head>
 <body>
     <div class="TopBar">
