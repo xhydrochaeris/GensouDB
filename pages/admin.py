@@ -145,6 +145,9 @@ async def admin_view(name, frm=0, to=100):
         if name.lower() == "user":
             tbl = conn.execute("SELECT * FROM USER WHERE ID >= ? AND ID <= ?", (frm, to)).fetchall()
             hrs = ["ID", "dname", "uname", "class", "pw_hash", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']
+        elif name.lower() == "artists":
+            tbl = conn.execute("SELECT * FROM ARTISTS WHERE ID >= ? AND ID <= ?", (frm, to)).fetchall()
+            hrs = ["ID", "Name", "Orig_Name", "ON_Lang", "Alt_Names", "AN_Lang", "Description", "Country"]
         t += await html_table(name, tbl, hrs)
         t += "<br>"
         return t
@@ -156,6 +159,9 @@ async def admin_search(name, post):
             x_string = "SELECT * FROM USER"
             hrs = ["ID", "dname", "uname", "class", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']
             hrs_d = ["ID", "dname", "uname", "class", "created", "pw_hash", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']
+        elif name.lower() == "artists":
+            x_string = "SELECT * FROM ARTISTS"
+            hrs = hrs_d = ["ID", "Name", "Orig_Name", "ON_Lang", "Alt_Names", "AN_Lang", "Description", "Country"]
         else:
             return []
         for f in hrs:
@@ -220,6 +226,10 @@ async def edit_form(user, name, i=None, search=False):
             if (i is not None):
                 r = conn.execute("SELECT * FROM USER WHERE ID = ?", (i,)).fetchone()
             hrs = ["ID", "dname", "uname", "class", "pw_hash", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']
+        elif name.lower() == "artists":
+            if (i is not None):
+                r = conn.execute("SELECT * FROM ARTISTS WHERE ID = ?", (i,)).fetchone()
+            hrs = ["ID", "Name", "Orig_Name", "ON_Lang", "Alt_Names", "AN_Lang", "Description", "Country"]
         if i is not None:
             t = f'<form action=\"/admin/edit\" method=post><input type="hidden" id="table", name="table", value="{name}">'
             for j in range(len(hrs)):
@@ -267,6 +277,16 @@ async def admin_insert(user, post):
                 for f in ["class", "created", "pw_date", "SESS_ID", "SESS_Expiry", "dummy_pw", 'theme']:
                     if post[f] != '':
                         conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], ins_id))
+        elif q.lower() == "artists":
+            with get_conn() as conn:
+                if post['ID'] == '':
+                    cursor = conn.execute("INSERT INTO ARTISTS (Name) VALUES (?)", (post['Name'],))
+                else:
+                    cursor = conn.execute("INSERT INTO ARTISTS (ID, Name) VALUES (?, ?)", (post['ID'], post['Name']))
+                ins_id = cursor.lastrowid
+                for f in ["Orig_Name", "ON_Lang", "Alt_Names", "AN_Lang", "Description", "Country"]:
+                    if post[f] != '':
+                        conn.execute(f"UPDATE ARTISTS SET {f} = ? WHERE ID = ?", (post[f], ins_id))
         return (await admin_head(user) + f'<h1>Item inserted at ID={ins_id}!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
     except:
         return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
@@ -293,6 +313,12 @@ async def admin_edit(user, post):
                         conn.execute(f"UPDATE USER SET {f} = ? WHERE ID = ?", (post[f], i))
                     else:
                         conn.execute(f"UPDATE USER SET {f} = NULL WHERE ID = ?", (i,))
+        elif q.lower() == "artists":
+                for f in ["Name", "Orig_Name", "ON_Lang", "Alt_Names", "AN_Lang", "Description", "Country"]:
+                    if post[f] != '':
+                        conn.execute(f"UPDATE ARTISTS SET {f} = ? WHERE ID = ?", (post[f], i))
+                    else:
+                        conn.execute(f"UPDATE ARTISTS SET {f} = NULL WHERE ID = ?", (i,))
         return (await admin_head(user) + f'<h1>Item at ID={i} updated!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
     except:
         return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
@@ -355,6 +381,9 @@ async def admin_page(user, post, query):
                     return (await admin_head(user) + f'<h1 style="color:red;">You cannot delete the admin user!!!!!!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 400, None, None)
                 with get_conn() as conn:
                     conn.execute("DELETE FROM USER WHERE ID = ?", (i,))
+            if q.lower() == 'artists':
+                with get_conn() as conn:
+                    conn.execute("DELETE FROM ARTISTS WHERE ID = ?", (i,))
             return (await admin_head(user) + f'<h1 class="rainbow rainbow_text_animated">Item was deleted!</h1><p><a href=/admin?table={q}>Return to admin page</a></p>' + HTML_END, 200, None, None)
         except:
             return (await admin_head(user) + await err_body(400) + HTML_END, 400, None, None)
